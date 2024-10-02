@@ -1,4 +1,5 @@
-import { UUID } from "crypto"
+import sha224 from 'crypto-js/sha224'
+import CryptoJSHex from 'crypto-js/enc-hex'
 import { v5 as uuidv5 } from "uuid"
 import { Env, Config } from "./interfaces"
 import { providersUri, proxiesUri } from "./variables"
@@ -27,7 +28,7 @@ export function IsValidUUID(uuid: string): boolean {
 	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
 }
 
-export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: string, port: number) {
+export function GetVlessConfig(no: number, uuid: string, sni: string, address: string, port: number) {
 	if (address.toLowerCase() == sni.toLowerCase()) {
     address = sni
   }
@@ -42,6 +43,25 @@ export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: str
 		uuid: uuid,
 		host: sni,
 		path: "vless-ws/?ed=2048",
+		address: address,
+	} as Config
+}
+
+export function GetTrojanConfig(no: number, sha224Password: string, sni: string, address: string, port: number) {
+	if (address.toLowerCase() == sni.toLowerCase()) {
+    address = sni
+  }
+  return {
+		remarks: `${no}-trojan-worker-${address}`,
+		configType: "trojan",
+		security: "tls",
+		tls: "tls",
+		network: "ws",
+		port: port,
+		sni: sni,
+		password: sha224Password,
+		host: sni,
+		path: "trojan-ws/?ed=2048",
 		address: address,
 	} as Config
 }
@@ -119,5 +139,9 @@ export async function getProxies(env: Env): Promise<Array<string>> {
 }
 
 export function getUUID(sni: string) : string {
-  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc")
+  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc") as string
+}
+
+export function getSHA224Password(sni: string) : string {
+  return sha224(sni.toLowerCase()).toString(CryptoJSHex)
 }
